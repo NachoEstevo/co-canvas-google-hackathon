@@ -16,10 +16,10 @@ export function CollaborativeCanvas({ roomId, onEditorMount }: CollaborativeCanv
   const [editor, setEditor] = useState<any>(null)
   const [hasError, setHasError] = useState(false)
   
-  // Use tldraw's built-in sync for real-time collaboration (includes image uploads by default)
+  // Use tldraw's built-in sync for real-time collaboration
   const store = useSyncDemo({ roomId })
   
-  console.log('📋 Image uploads should be enabled by default with useSyncDemo')
+  console.log('📋 Real-time collaboration enabled')
   
   console.log('🚀 CollaborativeCanvas initialized with tldraw sync:', {
     roomId,

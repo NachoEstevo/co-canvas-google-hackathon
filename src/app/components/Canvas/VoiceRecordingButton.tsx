@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { createShapeId } from '@tldraw/tldraw'
 
 interface VoiceRecordingButtonProps {
   editor: any
@@ -36,16 +37,46 @@ export function VoiceRecordingButton({ editor, roomId }: VoiceRecordingButtonPro
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
         
         try {
-          // For now, just play the recorded audio
+          // Create audio URL and add as voice note shape on canvas
           const audioUrl = URL.createObjectURL(audioBlob)
-          const audio = new Audio(audioUrl)
-          audio.play()
-          console.log('Voice note recorded and played back')
           
-          // TODO: In the future, we could save this to Firebase or process with ElevenLabs
+          // Get current viewport center for placement
+          const viewport = editor.getViewportPageBounds()
+          const centerX = viewport.x + viewport.w / 2
+          const centerY = viewport.y + viewport.h / 2
+          
+          // Create a custom voice note shape
+          const shapeId = createShapeId()
+          const voiceNoteShape = {
+            id: shapeId,
+            type: 'note',
+            x: centerX - 50,
+            y: centerY - 25,
+            props: {
+              text: '🎤 Voice Note',
+              audioUrl: audioUrl,
+              size: 'm',
+              color: 'violet',
+              font: 'draw'
+            }
+          }
+          
+          // Add the voice note to canvas
+          editor.createShape(voiceNoteShape)
+          editor.setSelectedShapes([shapeId])
+          
+          console.log('🎤 Voice note added to canvas at:', { x: centerX, y: centerY })
           
         } catch (error) {
-          console.error('Failed to play back voice note:', error)
+          console.error('Failed to create voice note:', error)
+          // Fallback: just play the audio
+          try {
+            const audioUrl = URL.createObjectURL(audioBlob)
+            const audio = new Audio(audioUrl)
+            audio.play()
+          } catch (playError) {
+            console.error('Failed to play back voice note:', playError)
+          }
         }
         
         // Clean up

@@ -14,6 +14,7 @@ export function GenerationOverlay({ editor }: GenerationOverlayProps) {
   const [prompt, setPrompt] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [showUI, setShowUI] = useState(false)
+  const [generationMode, setGenerationMode] = useState<'transform' | 'fusion' | 'fromScratch' | 'enhance'>('transform')
 
   useEffect(() => {
     if (!editor) return
@@ -34,10 +35,14 @@ export function GenerationOverlay({ editor }: GenerationOverlayProps) {
   }, [editor])
 
   const toggleAIDialog = () => {
-    if (selectedShapes.length > 0) {
-      setShowUI(!showUI)
+    setShowUI(!showUI)
+    // Set default mode based on selection
+    if (selectedShapes.length === 0) {
+      setGenerationMode('fromScratch')
+    } else if (selectedShapes.length >= 2) {
+      setGenerationMode('fusion')
     } else {
-      alert('Please select some shapes first to use AI generation!')
+      setGenerationMode('transform')
     }
   }
 
@@ -175,16 +180,8 @@ export function GenerationOverlay({ editor }: GenerationOverlayProps) {
         drawings: otherShapes.length
       })
       
-      // Enhance the prompt with context about the selection
-      let contextualPrompt = prompt
-      
-      if (imageShapes.length > 0 && otherShapes.length > 0) {
-        contextualPrompt = `I have both uploaded images and drawn shapes selected. ${prompt}. Please use the uploaded images as reference/context and transform or generate something based on both the images and the drawings I've created.`
-      } else if (imageShapes.length > 0) {
-        contextualPrompt = `I have ${imageShapes.length} uploaded image${imageShapes.length > 1 ? 's' : ''} selected. ${prompt}. Please analyze and transform these images.`
-      } else if (otherShapes.length > 0) {
-        contextualPrompt = `I have drawn ${otherShapes.length} shape${otherShapes.length > 1 ? 's' : ''} on the canvas. ${prompt}. Please analyze my drawing and create something based on it.`
-      }
+      // Enhance the prompt based on generation mode and context
+      let contextualPrompt = await enhancePromptWithMode(prompt, generationMode, imageShapes, otherShapes)
       
       let requestData: any = { prompt: contextualPrompt }
       
@@ -390,12 +387,78 @@ export function GenerationOverlay({ editor }: GenerationOverlayProps) {
     }
   }
 
+  // Helper functions for enhanced generation modes
+  const getModeDescription = (mode: string, shapeCount: number) => {
+    switch (mode) {
+      case 'transform':
+        return `Transform your ${shapeCount} selected item${shapeCount > 1 ? 's' : ''}`
+      case 'fusion':
+        return `Fuse your ${shapeCount} selected items together`
+      case 'fromScratch':
+        return 'Create something completely new'
+      case 'enhance':
+        return `Enhance and improve your ${shapeCount} selected item${shapeCount > 1 ? 's' : ''}`
+      default:
+        return 'What do you want to create?'
+    }
+  }
+  
+  const getPlaceholderText = (mode: string) => {
+    switch (mode) {
+      case 'transform':
+        return 'e.g., Make this a photorealistic wooden chair'
+      case 'fusion':
+        return 'e.g., Combine these into a futuristic cityscape'
+      case 'fromScratch':
+        return 'e.g., A majestic dragon flying over mountains'
+      case 'enhance':
+        return 'e.g., Add more detail and professional lighting'
+      default:
+        return 'Describe what you want to create...'
+    }
+  }
+  
+  const enhancePromptWithMode = async (userPrompt: string, mode: string, imageShapes: any[], otherShapes: any[]) => {
+    const modeEnhancements = {
+      transform: {
+        prefix: 'Transform and modify the existing content:',
+        suffix: 'Keep the core essence but apply the requested changes with high quality and detail.'
+      },
+      fusion: {
+        prefix: 'Seamlessly fuse and blend multiple elements together:',
+        suffix: 'Create a cohesive composition that combines all elements harmoniously with artistic flair.'
+      },
+      fromScratch: {
+        prefix: 'Create a completely new image from scratch:',
+        suffix: 'Generate with exceptional detail, composition, and artistic quality.'
+      },
+      enhance: {
+        prefix: 'Enhance and improve the existing content:',
+        suffix: 'Add professional lighting, textures, details, and visual polish while maintaining the original concept.'
+      }
+    }
+    
+    const enhancement = modeEnhancements[mode as keyof typeof modeEnhancements]
+    let contextualPrompt = `${enhancement.prefix} ${userPrompt}. ${enhancement.suffix}`
+    
+    // Add context based on selection
+    if (imageShapes.length > 0 && otherShapes.length > 0) {
+      contextualPrompt += ` I have both uploaded images and drawn shapes selected. Use the uploaded images as reference and incorporate the drawings.`
+    } else if (imageShapes.length > 0) {
+      contextualPrompt += ` I have ${imageShapes.length} uploaded image${imageShapes.length > 1 ? 's' : ''} selected as source material.`
+    } else if (otherShapes.length > 0) {
+      contextualPrompt += ` I have drawn ${otherShapes.length} shape${otherShapes.length > 1 ? 's' : ''} on the canvas as source material.`
+    }
+    
+    return contextualPrompt
+  }
+
   return (
     <>
-      {/* AI Button - Always visible when shapes are selected */}
+      {/* AI Button - Always visible */}
       <AIButton 
         onClick={toggleAIDialog}
-        disabled={selectedShapes.length === 0}
+        disabled={false}
       />
 
       {/* AI Generation Dialog - Only shows when AI button is clicked */}
@@ -427,17 +490,69 @@ export function GenerationOverlay({ editor }: GenerationOverlayProps) {
             </button>
           </div>
 
+          {/* Generation Mode Selector */}
+          <div className="space-y-3 mb-4">
+            <label className="block text-sm font-medium">
+              Generation Mode
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setGenerationMode('transform')}
+                disabled={selectedShapes.length === 0}
+                className={`px-3 py-2 rounded-md text-xs font-medium border transition-colors ${
+                  generationMode === 'transform' && selectedShapes.length > 0
+                    ? 'bg-blue-100 border-blue-300 text-blue-700'
+                    : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
+                } ${selectedShapes.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                🎨 Transform
+              </button>
+              <button
+                onClick={() => setGenerationMode('fusion')}
+                disabled={selectedShapes.length < 2}
+                className={`px-3 py-2 rounded-md text-xs font-medium border transition-colors ${
+                  generationMode === 'fusion' && selectedShapes.length >= 2
+                    ? 'bg-purple-100 border-purple-300 text-purple-700'
+                    : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
+                } ${selectedShapes.length < 2 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                🔗 Fuse
+              </button>
+              <button
+                onClick={() => setGenerationMode('fromScratch')}
+                className={`px-3 py-2 rounded-md text-xs font-medium border transition-colors ${
+                  generationMode === 'fromScratch'
+                    ? 'bg-green-100 border-green-300 text-green-700'
+                    : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
+                }`}
+              >
+                ✨ Create New
+              </button>
+              <button
+                onClick={() => setGenerationMode('enhance')}
+                disabled={selectedShapes.length === 0}
+                className={`px-3 py-2 rounded-md text-xs font-medium border transition-colors ${
+                  generationMode === 'enhance' && selectedShapes.length > 0
+                    ? 'bg-orange-100 border-orange-300 text-orange-700'
+                    : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
+                } ${selectedShapes.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                🚀 Enhance
+              </button>
+            </div>
+          </div>
+
           {/* Prompt Input */}
           <div className="space-y-3">
             <label className="block text-sm font-medium">
-              What do you want to create?
+              {getModeDescription(generationMode, selectedShapes.length)}
             </label>
             <div className="flex gap-2">
               <input
                 type="text"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder="e.g., Make this a photorealistic wooden chair"
+                placeholder={getPlaceholderText(generationMode)}
                 className="flex-1 px-3 py-2 rounded-md border border-input bg-background text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={isGenerating}
                 onKeyPress={(e) => e.key === 'Enter' && !isGenerating && prompt.trim() && handleGenerate()}
