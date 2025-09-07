@@ -55,7 +55,7 @@ app.prepare().then(() => {
     if (!room) {
       console.log(`🏠 Creating new room: ${roomId}`)
       room = new TLSocketRoom({
-        initialSnapshot: null,
+        initialSnapshot: undefined,
         onSessionRemoved: (room, args) => {
           console.log(`👋 Session removed from room ${roomId}:`, args.sessionId)
           if (room.getNumActiveSessions() === 0) {
