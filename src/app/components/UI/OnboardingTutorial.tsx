@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import type { TldrawEditor } from '@tldraw/tldraw'
+import type { TldrawEditor } from 'tldraw'
 
 interface OnboardingStep {
   id: string

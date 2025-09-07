@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import type { TldrawEditor } from '@tldraw/tldraw'
+import type { TldrawEditor } from 'tldraw'
 import { CollaborationService, VoiceAnnotation } from '../../lib/collaboration'
 
 interface VoiceAnnotationsOverlayProps {

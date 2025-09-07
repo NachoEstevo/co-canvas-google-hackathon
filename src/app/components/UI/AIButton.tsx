@@ -17,7 +17,7 @@ export function AIButton({ onClick, disabled = false }: AIButtonProps) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={`
-        fixed bottom-4 left-1/2 transform -translate-x-1/2 translate-x-20 z-[999]
+        fixed bottom-4 left-1/2 transform -translate-x-1/2 translate-x-40 z-[999]
         inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium
         bg-primary text-primary-foreground hover:bg-primary/90
         border border-input shadow-sm transition-colors

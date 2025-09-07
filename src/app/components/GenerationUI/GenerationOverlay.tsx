@@ -1,6 +1,6 @@
 'use client'
 
-import { TldrawEditor, createShapeId, TLImageAsset } from '@tldraw/tldraw'
+import { TldrawEditor, createShapeId, TLImageAsset } from 'tldraw'
 import { useState, useEffect } from 'react'
 import { VoicePromptInput } from '../VoicePrompt/VoicePromptInput'
 import { AIButton } from '../UI/AIButton'

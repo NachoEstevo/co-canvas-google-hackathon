@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import type { TldrawEditor } from '@tldraw/tldraw'
+import type { TldrawEditor } from 'tldraw'
 import { useErrorHandler } from './NotificationSystem'
 
 interface ExportSaveOverlayProps {

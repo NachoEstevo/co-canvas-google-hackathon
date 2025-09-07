@@ -3,15 +3,19 @@ const nextConfig = {
   // Fix TLDRAW bundling issues
   transpilePackages: [
     'tldraw',
-    '@tldraw/tldraw', 
-    '@tldraw/editor',
-    '@tldraw/store',
-    '@tldraw/state',
-    '@tldraw/state-react',
-    '@tldraw/utils',
-    '@tldraw/validate',
-    '@tldraw/tlschema'
+    '@tldraw/sync'
   ],
+  webpack: (config, { isServer }) => {
+    // Fix multiple instance issues with tldraw
+    if (!isServer) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        'tldraw': require.resolve('tldraw'),
+        '@tldraw/sync': require.resolve('@tldraw/sync')
+      }
+    }
+    return config
+  },
 }
 
 module.exports = nextConfig

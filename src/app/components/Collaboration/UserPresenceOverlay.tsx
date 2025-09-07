@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import type { TldrawEditor } from '@tldraw/tldraw'
+import type { TldrawEditor } from 'tldraw'
 import { CollaborationService, UserPresence } from '../../lib/collaboration'
 
 interface UserPresenceOverlayProps {

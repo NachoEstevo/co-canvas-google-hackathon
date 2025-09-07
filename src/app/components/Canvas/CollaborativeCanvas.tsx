@@ -2,7 +2,7 @@
 
 import { Tldraw } from 'tldraw'
 import { useSyncDemo } from '@tldraw/sync'
-import type { TldrawEditor } from '@tldraw/tldraw'
+import type { TldrawEditor } from 'tldraw'
 import { useEffect, useState } from 'react'
 import { GenerationOverlay } from '../GenerationUI/GenerationOverlay'
 import { VoiceRecordingButton } from './VoiceRecordingButton'

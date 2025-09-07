@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 
 /* Import tldraw CSS */
-@import '@tldraw/tldraw/tldraw.css';
+@import 'tldraw/tldraw.css';
 
 /* Reset default styles */
 * {

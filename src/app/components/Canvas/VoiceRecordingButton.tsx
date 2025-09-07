@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { createShapeId } from '@tldraw/tldraw'
+import { createShapeId } from 'tldraw'
 
 interface VoiceRecordingButtonProps {
   editor: any

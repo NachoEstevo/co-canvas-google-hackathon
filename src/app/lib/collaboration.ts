@@ -1,6 +1,6 @@
 import { database } from './firebase';
 import { ref, onValue, set, remove, push, serverTimestamp } from 'firebase/database';
-import type { TldrawEditor } from '@tldraw/tldraw';
+import type { TldrawEditor } from 'tldraw';
 
 export interface UserPresence {
   id: string;
