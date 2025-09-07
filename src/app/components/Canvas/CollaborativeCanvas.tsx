@@ -1,12 +1,13 @@
 'use client'
 
 import { Tldraw } from 'tldraw'
+import { useSyncDemo } from '@tldraw/sync'
 import type { TldrawEditor } from '@tldraw/tldraw'
 import { useEffect, useState } from 'react'
 import { GenerationOverlay } from '../GenerationUI/GenerationOverlay'
 import { UserPresenceOverlay } from '../Collaboration/UserPresenceOverlay'
 import { VoiceAnnotationsOverlay } from '../Collaboration/VoiceAnnotationsOverlay'
-import { CollaborationService, VoiceAnnotation } from '../../lib/collaboration'
+import { VoiceAnnotation } from '../../lib/collaboration'
 
 interface CollaborativeCanvasProps {
   roomId: string
@@ -15,37 +16,21 @@ interface CollaborativeCanvasProps {
 
 export function CollaborativeCanvas({ roomId, onEditorMount }: CollaborativeCanvasProps) {
   const [editor, setEditor] = useState<any>(null)
-  const [collaborationService, setCollaborationService] = useState<CollaborationService | null>(null)
   const [voiceAnnotations, setVoiceAnnotations] = useState<VoiceAnnotation[]>([])
   const [hasError, setHasError] = useState(false)
-
-  useEffect(() => {
-    try {
-      // Initialize collaboration service
-      const service = new CollaborationService(roomId)
-      setCollaborationService(service)
-
-      // Listen for voice annotations
-      service.listenToVoiceAnnotations(setVoiceAnnotations)
-
-      return () => {
-        service.cleanup()
-      }
-    } catch (error) {
-      console.error('Failed to initialize collaboration service:', error)
-      setHasError(true)
-    }
-  }, [roomId])
+  
+  // Use tldraw's built-in sync for real-time collaboration
+  const store = useSyncDemo({ roomId })
+  
+  console.log('🚀 CollaborativeCanvas initialized with tldraw sync:', {
+    roomId,
+    hasStore: !!store
+  })
 
   const handleMount = (editor: any) => {
     setEditor(editor)
-    console.log('TLDRAW Editor mounted for room:', roomId)
-    console.log('Editor instance:', editor)
-    
-    // Set up collaboration
-    if (collaborationService) {
-      collaborationService.setEditor(editor)
-    }
+    console.log('✅ TLDRAW Editor mounted with native sync for room:', roomId)
+    console.log('📡 Real-time collaboration active via tldraw sync')
     
     // Call parent callback
     if (onEditorMount) {
@@ -83,8 +68,8 @@ export function CollaborativeCanvas({ roomId, onEditorMount }: CollaborativeCanv
   return (
     <div className="tldraw-container" style={{ width: '100vw', height: '100vh', position: 'fixed', top: 0, left: 0 }}>
       <Tldraw 
+        store={store}
         onMount={handleMount}
-        persistenceKey={`co-creative-canvas-${roomId}`}
       />
       
       {/* Custom UI Overlays - positioned above TLDRAW */}
@@ -94,22 +79,8 @@ export function CollaborativeCanvas({ roomId, onEditorMount }: CollaborativeCanv
         </div>
       )}
       
-      {editor && collaborationService && (
-        <div className="user-presence-overlay" style={{ position: 'fixed', top: '20px', left: '20px' }}>
-          <UserPresenceOverlay 
-            editor={editor} 
-            collaborationService={collaborationService}
-          />
-        </div>
-      )}
-      
-      {editor && collaborationService && (
-        <VoiceAnnotationsOverlay
-          editor={editor}
-          collaborationService={collaborationService}
-          annotations={voiceAnnotations}
-        />
-      )}
+      {/* Note: User presence is now handled natively by tldraw sync */}
+      {/* Voice annotations can be added later if needed */}
     </div>
   )
 }

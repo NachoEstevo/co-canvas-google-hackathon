@@ -28,6 +28,9 @@ export interface VoiceAnnotation {
   timestamp: any; // Firebase server timestamp
 }
 
+// Note: CollaborationService is now deprecated in favor of tldraw's built-in sync
+// Keeping VoiceAnnotation interface for potential future voice features
+
 export class CollaborationService {
   private editor: any = null;
   private roomId: string;
