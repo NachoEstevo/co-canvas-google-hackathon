@@ -18,17 +18,19 @@ export function CollaborativeCanvas({ roomId, onEditorMount }: CollaborativeCanv
   
   // Create store only once using useMemo to prevent re-rendering loop
   const store = useMemo(() => {
-    console.log('📋 Creating canvas store with asset support for room:', roomId)
+    console.log('📋 Creating canvas store for room:', roomId)
     return createTLStore({
       shapeUtils: defaultShapeUtils,
       bindingUtils: defaultBindingUtils,
-      assets: customAssetStore,
     })
   }, [roomId]) // Only recreate if roomId changes
 
   const handleMount = (editor: any) => {
     setEditor(editor)
-    console.log('✅ Canvas ready with image upload support')
+    console.log('✅ Canvas ready with custom image upload handling')
+    
+    // Set up custom image upload handling
+    setupCustomImageHandling(editor)
     
     // Call parent callback
     if (onEditorMount) {
@@ -38,6 +40,73 @@ export function CollaborativeCanvas({ roomId, onEditorMount }: CollaborativeCanv
     // Set up some default preferences for better UX
     editor.user.updateUserPreferences({
       isSnapMode: false,
+    })
+  }
+
+  const setupCustomImageHandling = (editor: any) => {
+    // Handle file drops and pastes
+    const handleFileUpload = async (file: File) => {
+      if (!file.type.startsWith('image/')) return
+
+      try {
+        console.log('📁 Handling image upload:', file.name)
+        
+        // Upload to R2 via our API
+        const formData = new FormData()
+        formData.append('file', file)
+        
+        const response = await fetch('/api/upload/asset', {
+          method: 'POST',
+          body: formData
+        })
+
+        if (!response.ok) {
+          throw new Error(`Upload failed: ${response.status}`)
+        }
+
+        const result = await response.json()
+        console.log('✅ Image uploaded successfully:', result.src)
+
+        // Create an image shape with the uploaded URL
+        const viewport = editor.getViewportPageBounds()
+        const center = { x: viewport.x + viewport.w / 2, y: viewport.y + viewport.h / 2 }
+        
+        editor.createShape({
+          type: 'image',
+          x: center.x - 100,
+          y: center.y - 100,
+          props: {
+            url: result.src,
+            w: 200,
+            h: 200,
+          }
+        })
+
+      } catch (error) {
+        console.error('❌ Image upload failed:', error)
+      }
+    }
+
+    // Set up drop handler
+    const canvas = document.querySelector('.tldraw-container')
+    if (canvas) {
+      canvas.addEventListener('drop', (e: Event) => {
+        e.preventDefault()
+        const dragEvent = e as DragEvent
+        const files = Array.from(dragEvent.dataTransfer?.files || [])
+        files.forEach(handleFileUpload)
+      })
+
+      canvas.addEventListener('dragover', (e: Event) => {
+        e.preventDefault()
+      })
+    }
+
+    // Set up paste handler  
+    document.addEventListener('paste', (e: Event) => {
+      const clipboardEvent = e as ClipboardEvent
+      const files = Array.from(clipboardEvent.clipboardData?.files || [])
+      files.forEach(handleFileUpload)
     })
   }
 
@@ -68,7 +137,6 @@ export function CollaborativeCanvas({ roomId, onEditorMount }: CollaborativeCanv
       <Tldraw 
         store={store}
         onMount={handleMount}
-        assets={customAssetStore}
       />
       
       {/* Custom UI Overlays - positioned above TLDRAW */}

@@ -1,11 +1,13 @@
-// Custom asset store that enables image uploads by storing them as base64 data URLs
-export class CustomAssetStore {
-  async upload(asset: unknown, file: File): Promise<{ src: string }> {
+import type { TLAssetStore, TLAsset, TLAssetContext } from 'tldraw'
+
+// Custom asset store that enables image uploads by storing them in R2
+export class CustomAssetStore implements TLAssetStore {
+  async upload(asset: TLAsset, file: File): Promise<{ src: string }> {
     console.log('🚀 CustomAssetStore.upload() called!', {
       fileName: file.name,
       fileSize: file.size,
       fileType: file.type,
-      asset
+      assetId: asset.id
     })
 
     try {
@@ -34,12 +36,16 @@ export class CustomAssetStore {
     }
   }
 
-  resolve(asset: { props: { src: string } }): string {
-    // For base64 data URLs, we just return them as-is
-    // No additional resolution needed
-    console.log('🔍 CustomAssetStore: Resolving asset src:', asset.props.src.substring(0, 50) + '...')
+  resolve(asset: TLAsset, ctx: TLAssetContext): string | Promise<string | null> | null {
+    // Handle the case where src might be null
+    if (asset.type === 'image' && asset.props.src) {
+      console.log('🔍 CustomAssetStore: Resolving asset src:', asset.props.src.substring(0, 50) + '...')
+      return asset.props.src
+    }
     
-    return asset.props.src
+    // Return null if we can't resolve the asset
+    console.warn('⚠️ Cannot resolve asset:', asset.id, asset.type)
+    return null
   }
 }
 
