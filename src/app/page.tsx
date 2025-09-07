@@ -4,6 +4,7 @@ import { CollaborativeCanvas } from './components/Canvas/CollaborativeCanvas'
 import { OnboardingTutorial, QuickHelpButton } from './components/UI/OnboardingTutorial'
 import { ExportSaveOverlay } from './components/UI/ExportSaveOverlay'
 import { ImageUploadButton } from './components/UI/ImageUploadButton'
+import { UserNameDialog } from './components/UI/UserNameDialog'
 import { useNotifications } from './components/UI/NotificationSystem'
 import { useEffect, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
@@ -11,6 +12,7 @@ import type { TldrawEditor } from 'tldraw'
 
 export default function HomePage() {
   const [roomId, setRoomId] = useState<string>('')
+  const [userName, setUserName] = useState<string>('')
   const [editor, setEditor] = useState<any>(null)
   const { addNotification } = useNotifications()
 
@@ -45,85 +47,43 @@ export default function HomePage() {
   }
 
   const handleImageUpload = async (file: File) => {
+    // This will trigger tldraw's native image upload via our asset store
     if (!editor) return
-
-    try {
-      // Upload to R2
-      const formData = new FormData()
-      formData.append('file', file)
+    
+    console.log('🎯 Triggering native tldraw image upload for:', file.name)
+    
+    // Create a file input event to trigger tldraw's native handling
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.files = (() => {
+      const dt = new DataTransfer()
+      dt.items.add(file)
+      return dt.files
+    })()
+    
+    // Dispatch to tldraw canvas to trigger native upload
+    const canvas = document.querySelector('.tldraw')
+    if (canvas) {
+      const event = new Event('change', { bubbles: true })
+      input.dispatchEvent(event)
       
-      const response = await fetch('/api/upload/asset', {
-        method: 'POST',
-        body: formData
+      // Manually trigger by simulating drop
+      const dropEvent = new DragEvent('drop', { bubbles: true })
+      Object.defineProperty(dropEvent, 'dataTransfer', {
+        value: {
+          files: [file],
+          items: [{ kind: 'file', type: file.type, getAsFile: () => file }]
+        }
       })
-
-      if (!response.ok) {
-        throw new Error(`Upload failed: ${response.status}`)
-      }
-
-      const result = await response.json()
-      
-      // Create asset and image shape
-      const assetId = editor.createAssetId()
-      
-      const asset = {
-        id: assetId,
-        type: 'image' as const,
-        typeName: 'asset' as const,
-        props: {
-          name: file.name,
-          src: result.src,
-          w: 200,
-          h: 200,
-          mimeType: file.type,
-          isAnimated: false,
-        },
-        meta: {},
-      }
-      
-      editor.createAssets([asset])
-      
-      const viewport = editor.getViewportPageBounds()
-      const center = { x: viewport.x + viewport.w / 2, y: viewport.y + viewport.h / 2 }
-      
-      const shapeId = editor.createShapeId()
-      const imageShape = {
-        id: shapeId,
-        type: 'image' as const,
-        typeName: 'shape' as const,
-        x: center.x - 100,
-        y: center.y - 100,
-        rotation: 0,
-        index: editor.getHighestIndexForParent(editor.getCurrentPageId()),
-        parentId: editor.getCurrentPageId(),
-        props: {
-          assetId: assetId,
-          w: 200,
-          h: 200,
-        },
-        meta: {},
-        opacity: 1,
-        isLocked: false,
-      }
-      
-      editor.createShapes([imageShape])
-      
-      addNotification({
-        type: 'success',
-        title: 'Image Uploaded!',
-        message: `${file.name} added to canvas`,
-        duration: 3000
-      })
-
-    } catch (error) {
-      console.error('Image upload failed:', error)
-      addNotification({
-        type: 'error',
-        title: 'Upload Failed',
-        message: 'Could not upload image. Please try again.',
-        duration: 5000
-      })
+      canvas.dispatchEvent(dropEvent)
     }
+    
+    addNotification({
+      type: 'success',
+      title: 'Image Upload Started',
+      message: `Processing ${file.name}...`,
+      duration: 2000
+    })
   }
 
   if (!roomId) {
@@ -139,8 +99,15 @@ export default function HomePage() {
 
   return (
     <div className="relative w-screen h-screen overflow-hidden">
+      {/* User Name Dialog */}
+      <UserNameDialog onUserNameSet={setUserName} />
+      
       {/* TLDRAW Canvas - Full Screen */}
-      <CollaborativeCanvas roomId={roomId} onEditorMount={handleEditorMount} />
+      <CollaborativeCanvas 
+        roomId={roomId} 
+        userName={userName}
+        onEditorMount={handleEditorMount} 
+      />
       
       {/* Top Navigation Bar */}
       <div className="navbar">
@@ -156,7 +123,7 @@ export default function HomePage() {
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-gray-900">Co-Creative Canvas</h1>
-                  <p className="text-xs text-gray-500">Real-time AI Collaboration + R2 Storage</p>
+                  <p className="text-xs text-gray-500">Real-time AI Collaboration + Native Sync</p>
                 </div>
               </div>
 
@@ -167,6 +134,11 @@ export default function HomePage() {
                   <span className="text-sm text-blue-700 font-medium">
                     Room: <code className="font-mono bg-blue-100 px-2 py-1 rounded-md text-blue-800">{roomId.slice(0, 8)}...</code>
                   </span>
+                  {userName && (
+                    <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-md">
+                      👤 {userName}
+                    </span>
+                  )}
                   <button 
                     onClick={copyRoomLink}
                     className="ml-2 p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-all duration-200"
