@@ -278,7 +278,7 @@ export function QuickHelpButton() {
     <>
       <button
         onClick={() => setShowHelp(true)}
-        className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium border-0 bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-gray-900 shadow-md transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring hover:shadow-lg hover:scale-105"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="10" />

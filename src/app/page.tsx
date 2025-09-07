@@ -59,10 +59,10 @@ export default function HomePage() {
       {/* TLDRAW Canvas - Full Screen */}
       <CollaborativeCanvas roomId={roomId} onEditorMount={handleEditorMount} />
       
-      {/* Top Navigation Bar - Overlay */}
-      <div className="fixed top-0 left-0 right-0 z-[1001] bg-white shadow-md">
-        <div className="px-6 py-3">
-          <div className="flex items-center justify-between">
+      {/* Top Navigation Bar */}
+      <div className="navbar">
+        <div className="px-6 py-3 h-full">
+          <div className="flex items-center justify-between h-full">
             {/* Logo and Brand */}
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
@@ -73,7 +73,7 @@ export default function HomePage() {
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-gray-900">Co-Creative Canvas</h1>
-                  <p className="text-xs text-gray-500">AI-Powered Canvas with Image Support</p>
+                  <p className="text-xs text-gray-500">Real-time AI Collaboration</p>
                 </div>
               </div>
 
@@ -81,12 +81,12 @@ export default function HomePage() {
               <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-sm text-blue-700">
-                    Room: <code className="font-mono bg-blue-100 px-1 py-0.5 rounded">{roomId.slice(0, 8)}...</code>
+                  <span className="text-sm text-blue-700 font-medium">
+                    Room: <code className="font-mono bg-blue-100 px-2 py-1 rounded-md text-blue-800">{roomId.slice(0, 8)}...</code>
                   </span>
                   <button 
                     onClick={copyRoomLink}
-                    className="text-blue-600 hover:text-blue-700 transition-colors"
+                    className="ml-2 p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-all duration-200"
                     title="Copy invite link"
                   >
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">

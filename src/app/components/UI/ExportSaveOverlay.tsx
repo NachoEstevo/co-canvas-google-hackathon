@@ -183,11 +183,11 @@ export function ExportSaveOverlay({ editor, roomId }: ExportSaveOverlayProps) {
         disabled={isSaving}
         className={`
           inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium
-          border border-input shadow-sm transition-colors
+          border-0 shadow-md transition-all duration-200
           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
           ${isSaving 
-            ? 'bg-muted text-muted-foreground cursor-not-allowed' 
-            : 'bg-emerald-600 text-white hover:bg-emerald-700'
+            ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+            : 'bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-lg hover:scale-105'
           }
         `}
       >
@@ -214,11 +214,11 @@ export function ExportSaveOverlay({ editor, roomId }: ExportSaveOverlayProps) {
           disabled={isExporting}
           className={`
             inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium
-            border border-input shadow-sm transition-colors
+            border-0 shadow-md transition-all duration-200
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
             ${isExporting 
-              ? 'bg-muted text-muted-foreground cursor-not-allowed' 
-              : 'bg-violet-600 text-white hover:bg-violet-700'
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+              : 'bg-violet-600 text-white hover:bg-violet-700 hover:shadow-lg hover:scale-105'
             }
           `}
         >

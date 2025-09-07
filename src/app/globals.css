@@ -25,15 +25,15 @@ html, body {
   }
 }
 
-/* TLDRAW container styles */
+/* TLDRAW container styles - positioned below navbar */
 .tldraw-container {
   position: fixed;
-  top: 0;
+  top: 60px; /* Space for navbar */
   left: 0;
   right: 0;
   bottom: 0;
   width: 100vw;
-  height: 100vh;
+  height: calc(100vh - 60px); /* Subtract navbar height */
 }
 
 /* Let tldraw manage its own positioning */
@@ -42,10 +42,23 @@ html, body {
   height: 100%;
 }
 
+/* Navbar styles */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  z-index: 1000;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
 /* Custom UI overlay styles - High z-index to appear above TLDRAW */
 .generation-overlay {
   position: fixed;
-  top: 20px;
+  top: 80px; /* Below navbar */
   right: 20px;
   z-index: 1000;
   background: white;

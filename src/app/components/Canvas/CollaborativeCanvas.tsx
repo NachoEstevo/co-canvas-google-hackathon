@@ -1,6 +1,7 @@
 'use client'
 
 import { Tldraw, createTLStore, defaultShapeUtils, defaultBindingUtils } from 'tldraw'
+import { useSyncDemo } from '@tldraw/sync'
 import type { TldrawEditor } from 'tldraw'
 import { useEffect, useState, useMemo } from 'react'
 import { GenerationOverlay } from '../GenerationUI/GenerationOverlay'
@@ -16,18 +17,33 @@ export function CollaborativeCanvas({ roomId, onEditorMount }: CollaborativeCanv
   const [editor, setEditor] = useState<any>(null)
   const [hasError, setHasError] = useState(false)
   
-  // Create store only once using useMemo to prevent re-rendering loop
-  const store = useMemo(() => {
-    console.log('📋 Creating canvas store for room:', roomId)
+  // Use sync store for real-time collaboration
+  const syncStore = useSyncDemo({ roomId })
+  
+  // Create fallback local store in case sync fails
+  const localStore = useMemo(() => {
     return createTLStore({
       shapeUtils: defaultShapeUtils,
       bindingUtils: defaultBindingUtils,
     })
-  }, [roomId]) // Only recreate if roomId changes
+  }, [roomId])
+  
+  // Prefer sync store for collaboration, fallback to local
+  const store = syncStore || localStore
+  
+  console.log('📋 Canvas initialized:', {
+    roomId,
+    hasSync: !!syncStore,
+    hasStore: !!store
+  })
 
   const handleMount = (editor: any) => {
     setEditor(editor)
-    console.log('✅ Canvas ready with custom image upload handling')
+    if (syncStore) {
+      console.log('✅ Real-time collaboration active with custom image uploads')
+    } else {
+      console.log('⚠️ Using local store - collaboration not available, but image uploads work')
+    }
     
     // Set up custom image upload handling
     setupCustomImageHandling(editor)
@@ -133,7 +149,7 @@ export function CollaborativeCanvas({ roomId, onEditorMount }: CollaborativeCanv
   }
 
   return (
-    <div className="tldraw-container" style={{ width: '100vw', height: '100vh', position: 'fixed', top: 0, left: 0 }}>
+    <div className="tldraw-container">
       <Tldraw 
         store={store}
         onMount={handleMount}
