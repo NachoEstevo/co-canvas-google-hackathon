@@ -1,11 +1,11 @@
 'use client'
 
-import { Tldraw } from 'tldraw'
-import { useSyncDemo } from '@tldraw/sync'
+import { Tldraw, createTLStore, defaultShapeUtils, defaultBindingUtils } from 'tldraw'
 import type { TldrawEditor } from 'tldraw'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { GenerationOverlay } from '../GenerationUI/GenerationOverlay'
 import { VoiceRecordingButton } from './VoiceRecordingButton'
+import { customAssetStore } from '../../lib/assetStore'
 
 interface CollaborativeCanvasProps {
   roomId: string
@@ -16,20 +16,19 @@ export function CollaborativeCanvas({ roomId, onEditorMount }: CollaborativeCanv
   const [editor, setEditor] = useState<any>(null)
   const [hasError, setHasError] = useState(false)
   
-  // Use tldraw's built-in sync for real-time collaboration
-  const store = useSyncDemo({ roomId })
-  
-  console.log('📋 Real-time collaboration enabled')
-  
-  console.log('🚀 CollaborativeCanvas initialized with tldraw sync:', {
-    roomId,
-    hasStore: !!store
-  })
+  // Create store only once using useMemo to prevent re-rendering loop
+  const store = useMemo(() => {
+    console.log('📋 Creating canvas store with asset support for room:', roomId)
+    return createTLStore({
+      shapeUtils: defaultShapeUtils,
+      bindingUtils: defaultBindingUtils,
+      assets: customAssetStore,
+    })
+  }, [roomId]) // Only recreate if roomId changes
 
   const handleMount = (editor: any) => {
     setEditor(editor)
-    console.log('✅ TLDRAW Editor mounted with native sync for room:', roomId)
-    console.log('📡 Real-time collaboration active via tldraw sync')
+    console.log('✅ Canvas ready with image upload support')
     
     // Call parent callback
     if (onEditorMount) {
@@ -40,8 +39,6 @@ export function CollaborativeCanvas({ roomId, onEditorMount }: CollaborativeCanv
     editor.user.updateUserPreferences({
       isSnapMode: false,
     })
-    
-    console.log('✅ Editor ready with image upload support')
   }
 
   if (hasError) {
@@ -71,6 +68,7 @@ export function CollaborativeCanvas({ roomId, onEditorMount }: CollaborativeCanv
       <Tldraw 
         store={store}
         onMount={handleMount}
+        assets={customAssetStore}
       />
       
       {/* Custom UI Overlays - positioned above TLDRAW */}

@@ -73,7 +73,7 @@ export default function HomePage() {
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-gray-900">Co-Creative Canvas</h1>
-                  <p className="text-xs text-gray-500">Real-time AI Collaboration</p>
+                  <p className="text-xs text-gray-500">AI-Powered Canvas with Image Support</p>
                 </div>
               </div>
 
@@ -94,18 +94,6 @@ export default function HomePage() {
                       <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path>
                     </svg>
                   </button>
-                </div>
-              </div>
-              
-              {/* Image Upload Instructions */}
-              <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 max-w-xs">
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
-                  </svg>
-                  <span className="text-xs text-amber-700">
-                    📷 To add images: <strong>Copy & Paste</strong> from clipboard
-                  </span>
                 </div>
               </div>
             </div>

@@ -6,7 +6,7 @@ Google Hackathon project: Co-Creative Canvas - A collaborative drawing app with 
 ## ✅ Recently Completed Tasks (Session Summary)
 
 ### 1. UI/UX Fixes Completed
-- **Generate Button Positioning**: Moved AI star button further right (`ml-80`)
+- **Generate Button Positioning**: Moved AI star button further right (`ml-0`)
 - **Modal Generate Button**: Fixed styling with proper background (`bg-blue-600 text-white hover:bg-blue-700`)
 - **Save/Export Buttons**: Redesigned in ShadCN style with distinct colors:
   - Save: `bg-emerald-600 text-white hover:bg-emerald-700`
