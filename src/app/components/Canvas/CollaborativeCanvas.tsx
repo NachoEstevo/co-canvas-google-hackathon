@@ -5,9 +5,7 @@ import { useSyncDemo } from '@tldraw/sync'
 import type { TldrawEditor } from '@tldraw/tldraw'
 import { useEffect, useState } from 'react'
 import { GenerationOverlay } from '../GenerationUI/GenerationOverlay'
-import { UserPresenceOverlay } from '../Collaboration/UserPresenceOverlay'
-import { VoiceAnnotationsOverlay } from '../Collaboration/VoiceAnnotationsOverlay'
-import { VoiceAnnotation } from '../../lib/collaboration'
+import { VoiceRecordingButton } from './VoiceRecordingButton'
 
 interface CollaborativeCanvasProps {
   roomId: string
@@ -16,11 +14,12 @@ interface CollaborativeCanvasProps {
 
 export function CollaborativeCanvas({ roomId, onEditorMount }: CollaborativeCanvasProps) {
   const [editor, setEditor] = useState<any>(null)
-  const [voiceAnnotations, setVoiceAnnotations] = useState<VoiceAnnotation[]>([])
   const [hasError, setHasError] = useState(false)
   
-  // Use tldraw's built-in sync for real-time collaboration
+  // Use tldraw's built-in sync for real-time collaboration (includes image uploads by default)
   const store = useSyncDemo({ roomId })
+  
+  console.log('📋 Image uploads should be enabled by default with useSyncDemo')
   
   console.log('🚀 CollaborativeCanvas initialized with tldraw sync:', {
     roomId,
@@ -41,6 +40,8 @@ export function CollaborativeCanvas({ roomId, onEditorMount }: CollaborativeCanv
     editor.user.updateUserPreferences({
       isSnapMode: false,
     })
+    
+    console.log('✅ Editor ready with image upload support')
   }
 
   if (hasError) {
@@ -79,8 +80,12 @@ export function CollaborativeCanvas({ roomId, onEditorMount }: CollaborativeCanv
         </div>
       )}
       
+      {/* Voice Recording Button */}
+      {editor && (
+        <VoiceRecordingButton editor={editor} roomId={roomId} />
+      )}
+      
       {/* Note: User presence is now handled natively by tldraw sync */}
-      {/* Voice annotations can be added later if needed */}
     </div>
   )
 }
