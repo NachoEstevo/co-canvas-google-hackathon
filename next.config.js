@@ -1,3 +1,6 @@
+import { createRequire } from 'module'
+const require = createRequire(import.meta.url)
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Fix TLDRAW bundling issues
@@ -41,4 +44,4 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig
+export default nextConfig
