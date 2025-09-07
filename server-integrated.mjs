@@ -1,8 +1,8 @@
-const { createServer } = require('http')
-const { parse } = require('url')
-const next = require('next')
-const { WebSocketServer } = require('ws')
-const { TLSocketRoom } = require('@tldraw/sync-core')
+import { createServer } from 'http'
+import { parse } from 'url'
+import next from 'next'
+import { WebSocketServer } from 'ws'
+import { TLSocketRoom } from '@tldraw/sync-core'
 
 const dev = process.env.NODE_ENV !== 'production'
 const hostname = '0.0.0.0'

@@ -1,7 +1,7 @@
-const { WebSocketServer } = require('ws')
-const { TLSocketRoom } = require('@tldraw/sync-core')
-const { createServer } = require('http')
-const url = require('url')
+import { WebSocketServer } from 'ws'
+import { TLSocketRoom } from '@tldraw/sync-core'
+import { createServer } from 'http'
+import url from 'url'
 
 // Store active rooms
 const rooms = new Map()
