@@ -45,8 +45,13 @@ export function CollaborativeCanvas({ roomId, onEditorMount }: CollaborativeCanv
       console.log('⚠️ Using local store - collaboration not available, but image uploads work')
     }
     
-    // Set up custom image upload handling
-    setupCustomImageHandling(editor)
+    // Set up custom image upload handling with cleanup
+    let cleanup: (() => void) | undefined
+    
+    // Small delay to ensure editor is fully mounted
+    setTimeout(() => {
+      cleanup = setupCustomImageHandling(editor)
+    }, 100)
     
     // Call parent callback
     if (onEditorMount) {
@@ -57,15 +62,20 @@ export function CollaborativeCanvas({ roomId, onEditorMount }: CollaborativeCanv
     editor.user.updateUserPreferences({
       isSnapMode: false,
     })
+    
+    // Cleanup on unmount
+    return () => {
+      cleanup?.()
+    }
   }
 
   const setupCustomImageHandling = (editor: any) => {
-    // Handle file drops and pastes
+    // Handle file drops and pastes with enhanced logic
     const handleFileUpload = async (file: File) => {
       if (!file.type.startsWith('image/')) return
 
       try {
-        console.log('📁 Handling image upload:', file.name)
+        console.log('📁 Processing image upload:', file.name)
         
         // Upload to R2 via our API
         const formData = new FormData()
@@ -81,49 +91,136 @@ export function CollaborativeCanvas({ roomId, onEditorMount }: CollaborativeCanv
         }
 
         const result = await response.json()
-        console.log('✅ Image uploaded successfully:', result.src)
+        console.log('✅ Image uploaded to R2:', result.src)
 
-        // Create an image shape with the uploaded URL
+        // Create asset first, then create image shape
+        const assetId = editor.createAssetId()
+        
+        // Create asset record  
+        const asset = {
+          id: assetId,
+          type: 'image' as const,
+          typeName: 'asset' as const,
+          props: {
+            name: file.name,
+            src: result.src,
+            w: 200,
+            h: 200,
+            mimeType: file.type,
+            isAnimated: false,
+          },
+          meta: {},
+        }
+        
+        // Add asset to store
+        editor.createAssets([asset])
+        
+        // Create image shape using the asset
         const viewport = editor.getViewportPageBounds()
         const center = { x: viewport.x + viewport.w / 2, y: viewport.y + viewport.h / 2 }
         
-        editor.createShape({
-          type: 'image',
+        const shapeId = editor.createShapeId()
+        const imageShape = {
+          id: shapeId,
+          type: 'image' as const,
+          typeName: 'shape' as const,
           x: center.x - 100,
           y: center.y - 100,
+          rotation: 0,
+          index: editor.getHighestIndexForParent(editor.getCurrentPageId()),
+          parentId: editor.getCurrentPageId(),
           props: {
-            url: result.src,
+            assetId: assetId,
             w: 200,
             h: 200,
-          }
-        })
+          },
+          meta: {},
+          opacity: 1,
+          isLocked: false,
+        }
+        
+        editor.createShapes([imageShape])
+        console.log('✅ Image shape created successfully')
 
       } catch (error) {
         console.error('❌ Image upload failed:', error)
+        // Show user-friendly error
+        alert('Failed to upload image. Please try again.')
       }
     }
 
-    // Set up drop handler
-    const canvas = document.querySelector('.tldraw-container')
-    if (canvas) {
-      canvas.addEventListener('drop', (e: Event) => {
-        e.preventDefault()
-        const dragEvent = e as DragEvent
-        const files = Array.from(dragEvent.dataTransfer?.files || [])
-        files.forEach(handleFileUpload)
-      })
+    // Enhanced drop handler with better event handling
+    const setupDropHandler = () => {
+      const container = document.querySelector('.tldraw-container')
+      if (!container) return
 
-      canvas.addEventListener('dragover', (e: Event) => {
+      const handleDrop = (e: Event) => {
         e.preventDefault()
-      })
+        e.stopPropagation()
+        
+        const dragEvent = e as DragEvent
+        if (!dragEvent.dataTransfer) return
+        
+        const files = Array.from(dragEvent.dataTransfer.files)
+        const imageFiles = files.filter(f => f.type.startsWith('image/'))
+        
+        console.log(`📥 Dropped ${imageFiles.length} images`)
+        imageFiles.forEach(handleFileUpload)
+      }
+
+      const handleDragOver = (e: Event) => {
+        e.preventDefault()
+        e.stopPropagation()
+      }
+
+      const handleDragEnter = (e: Event) => {
+        e.preventDefault()
+        e.stopPropagation()
+      }
+
+      container.addEventListener('drop', handleDrop)
+      container.addEventListener('dragover', handleDragOver)  
+      container.addEventListener('dragenter', handleDragEnter)
+
+      return () => {
+        container.removeEventListener('drop', handleDrop)
+        container.removeEventListener('dragover', handleDragOver)
+        container.removeEventListener('dragenter', handleDragEnter)
+      }
     }
 
-    // Set up paste handler  
-    document.addEventListener('paste', (e: Event) => {
-      const clipboardEvent = e as ClipboardEvent
-      const files = Array.from(clipboardEvent.clipboardData?.files || [])
-      files.forEach(handleFileUpload)
-    })
+    // Enhanced paste handler
+    const setupPasteHandler = () => {
+      const handlePaste = (e: Event) => {
+        const clipboardEvent = e as ClipboardEvent
+        if (!clipboardEvent.clipboardData) return
+        
+        const files = Array.from(clipboardEvent.clipboardData.files)
+        const imageFiles = files.filter(f => f.type.startsWith('image/'))
+        
+        if (imageFiles.length > 0) {
+          e.preventDefault()
+          e.stopPropagation()
+          console.log(`📋 Pasted ${imageFiles.length} images`)
+          imageFiles.forEach(handleFileUpload)
+        }
+      }
+
+      document.addEventListener('paste', handlePaste)
+      
+      return () => {
+        document.removeEventListener('paste', handlePaste)
+      }
+    }
+
+    // Setup handlers and return cleanup function
+    const cleanupDrop = setupDropHandler()
+    const cleanupPaste = setupPasteHandler()
+    
+    return () => {
+      cleanupDrop?.()
+      cleanupPaste?.()
+    }
   }
 
   if (hasError) {

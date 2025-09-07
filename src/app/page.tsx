@@ -3,6 +3,7 @@
 import { CollaborativeCanvas } from './components/Canvas/CollaborativeCanvas'
 import { OnboardingTutorial, QuickHelpButton } from './components/UI/OnboardingTutorial'
 import { ExportSaveOverlay } from './components/UI/ExportSaveOverlay'
+import { ImageUploadButton } from './components/UI/ImageUploadButton'
 import { useNotifications } from './components/UI/NotificationSystem'
 import { useEffect, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
@@ -43,6 +44,88 @@ export default function HomePage() {
     setEditor(mountedEditor)
   }
 
+  const handleImageUpload = async (file: File) => {
+    if (!editor) return
+
+    try {
+      // Upload to R2
+      const formData = new FormData()
+      formData.append('file', file)
+      
+      const response = await fetch('/api/upload/asset', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.status}`)
+      }
+
+      const result = await response.json()
+      
+      // Create asset and image shape
+      const assetId = editor.createAssetId()
+      
+      const asset = {
+        id: assetId,
+        type: 'image' as const,
+        typeName: 'asset' as const,
+        props: {
+          name: file.name,
+          src: result.src,
+          w: 200,
+          h: 200,
+          mimeType: file.type,
+          isAnimated: false,
+        },
+        meta: {},
+      }
+      
+      editor.createAssets([asset])
+      
+      const viewport = editor.getViewportPageBounds()
+      const center = { x: viewport.x + viewport.w / 2, y: viewport.y + viewport.h / 2 }
+      
+      const shapeId = editor.createShapeId()
+      const imageShape = {
+        id: shapeId,
+        type: 'image' as const,
+        typeName: 'shape' as const,
+        x: center.x - 100,
+        y: center.y - 100,
+        rotation: 0,
+        index: editor.getHighestIndexForParent(editor.getCurrentPageId()),
+        parentId: editor.getCurrentPageId(),
+        props: {
+          assetId: assetId,
+          w: 200,
+          h: 200,
+        },
+        meta: {},
+        opacity: 1,
+        isLocked: false,
+      }
+      
+      editor.createShapes([imageShape])
+      
+      addNotification({
+        type: 'success',
+        title: 'Image Uploaded!',
+        message: `${file.name} added to canvas`,
+        duration: 3000
+      })
+
+    } catch (error) {
+      console.error('Image upload failed:', error)
+      addNotification({
+        type: 'error',
+        title: 'Upload Failed',
+        message: 'Could not upload image. Please try again.',
+        duration: 5000
+      })
+    }
+  }
+
   if (!roomId) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-100">
@@ -73,7 +156,7 @@ export default function HomePage() {
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-gray-900">Co-Creative Canvas</h1>
-                  <p className="text-xs text-gray-500">Real-time AI Collaboration</p>
+                  <p className="text-xs text-gray-500">Real-time AI Collaboration + R2 Storage</p>
                 </div>
               </div>
 
@@ -101,6 +184,7 @@ export default function HomePage() {
             {/* Action Buttons */}
             <div className="flex items-center gap-2">
               <QuickHelpButton />
+              {editor && <ImageUploadButton onImageUpload={handleImageUpload} />}
               {editor && <ExportSaveOverlay editor={editor} roomId={roomId} />}
             </div>
           </div>
