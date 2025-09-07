@@ -1,10 +1,11 @@
 'use client'
 
-import { Tldraw, useSyncDemo } from 'tldraw'
+import { Tldraw, useSync } from 'tldraw'
 import type { TldrawEditor } from 'tldraw'
 import { useEffect, useState } from 'react'
 import { GenerationOverlay } from '../GenerationUI/GenerationOverlay'
 import { VoiceRecordingButton } from './VoiceRecordingButton'
+import { customAssetStore } from '../../lib/assetStore'
 
 interface CollaborativeCanvasProps {
   roomId: string
@@ -16,18 +17,34 @@ export function CollaborativeCanvas({ roomId, userName, onEditorMount }: Collabo
   const [editor, setEditor] = useState<any>(null)
   const [hasError, setHasError] = useState(false)
   
-  // Use tldraw sync demo (production useSync requires self-hosted server)
-  const store = useSyncDemo({ roomId })
+  // Determine WebSocket URL based on environment
+  const getWebSocketUrl = () => {
+    if (typeof window !== 'undefined') {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+      const host = process.env.NODE_ENV === 'production' 
+        ? 'co-canvas-google-hackathon-production.up.railway.app'
+        : window.location.host
+      return `${protocol}//${host}/api/sync?roomId=${roomId}`
+    }
+    return `ws://localhost:3000/api/sync?roomId=${roomId}`
+  }
   
-  console.log('📋 Canvas initialized with useSyncDemo (for hackathon):', {
+  // Use production sync with our custom WebSocket server
+  const store = useSync({
+    uri: getWebSocketUrl(),
+    assets: customAssetStore,
+  })
+  
+  console.log('📋 Canvas initialized with custom sync server:', {
     roomId: roomId?.slice(0, 8) + '...',
     userName,
     hasStore: !!store,
-    note: 'Production useSync requires self-hosted server'
+    websocketUrl: getWebSocketUrl(),
+    hasAssets: !!customAssetStore
   })
 
   const handleMount = (editor: any) => {
-    console.log('🎯 Editor mounted with official sync')
+    console.log('🎯 Editor mounted with custom sync server')
     
     setEditor(editor)
     
@@ -45,7 +62,7 @@ export function CollaborativeCanvas({ roomId, userName, onEditorMount }: Collabo
       console.log('👤 User name set to:', userName)
     }
     
-    console.log('✅ Official tldraw collaboration active with image uploads!')
+    console.log('✅ Custom tldraw sync server active with full image upload support!')
   }
 
 

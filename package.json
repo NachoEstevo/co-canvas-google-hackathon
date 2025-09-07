@@ -5,8 +5,12 @@
   "main": "index.js",
   "scripts": {
     "dev": "next dev",
+    "dev:sync": "node server.js",
     "build": "next build",
-    "start": "next start",
+    "start": "node server-integrated.js",
+    "start:production": "next build && node server-integrated.js",
+    "start:with-sync": "node server.js",
+    "sync-server": "node server.js",
     "lint": "next lint"
   },
   "keywords": [],
@@ -20,10 +24,12 @@
     "@google/generative-ai": "^0.24.1",
     "@tailwindcss/postcss": "^4.1.13",
     "@tldraw/sync": "^3.15.4",
+    "@tldraw/sync-core": "^3.15.4",
     "@types/node": "^24.3.1",
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
     "@types/uuid": "^10.0.0",
+    "@types/ws": "^8.18.1",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.35.0",
     "eslint-config-next": "^15.5.2",
@@ -35,6 +41,7 @@
     "tailwindcss": "^4.1.13",
     "tldraw": "^3.15.4",
     "typescript": "^5.9.2",
-    "uuid": "^12.0.0"
+    "uuid": "^12.0.0",
+    "ws": "^8.18.3"
   }
 }
