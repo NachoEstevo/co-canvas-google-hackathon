@@ -1,6 +1,7 @@
 'use client'
 
-import { Tldraw, useSync } from 'tldraw'
+import { Tldraw } from 'tldraw'
+import { useSync } from '@tldraw/sync'
 import type { TldrawEditor } from 'tldraw'
 import { useEffect, useState } from 'react'
 import { GenerationOverlay } from '../GenerationUI/GenerationOverlay'
