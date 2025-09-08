@@ -2,7 +2,6 @@ import { createServer } from 'http'
 import { parse } from 'url'
 import next from 'next'
 import { WebSocketServer } from 'ws'
-import { TLSocketRoom } from '@tldraw/sync-core'
 
 const dev = process.env.NODE_ENV !== 'production'
 const hostname = '0.0.0.0'
@@ -12,7 +11,7 @@ const port = parseInt(process.env.PORT) || 3000
 const app = next({ dev, hostname, port })
 const handle = app.getRequestHandler()
 
-// Store active rooms
+// Store active rooms - simple message relay
 const rooms = new Map()
 
 app.prepare().then(() => {
@@ -47,9 +46,7 @@ app.prepare().then(() => {
     path: '/api/sync'
   })
 
-
   wss.on('connection', (ws, request) => {
-    
     const parsedUrl = parse(request.url, true)
     const roomId = parsedUrl.query.roomId
     
@@ -59,47 +56,44 @@ app.prepare().then(() => {
       return
     }
     
+    // Get or create room clients list
+    if (!rooms.has(roomId)) {
+      rooms.set(roomId, new Set())
+    }
+    const roomClients = rooms.get(roomId)
     
-    // Get or create room
-    let room = rooms.get(roomId)
-    if (!room) {
-      room = new TLSocketRoom({
-        initialSnapshot: undefined,
-        onSessionRemoved: (room, args) => {
-          if (room.getNumActiveSessions() === 0) {
-            rooms.delete(roomId)
+    // Add client to room
+    roomClients.add(ws)
+    
+    // Handle WebSocket messages - relay to other clients in the same room
+    ws.on('message', (data) => {
+      try {
+        // Relay message to all other clients in the room
+        for (const client of roomClients) {
+          if (client !== ws && client.readyState === client.OPEN) {
+            client.send(data)
           }
         }
-      })
-      rooms.set(roomId, room)
-    }
+      } catch (error) {
+        console.error(`❌ Error relaying message in room ${roomId}:`, error)
+      }
+    })
     
-    // Handle WebSocket connection with tldraw sync
-    try {
-      if (ws && typeof ws.on === 'function') {
-        // Add error handlers first to prevent uncaught exceptions
-        ws.on('error', (error) => {
-          console.error(`❌ WebSocket error in room ${roomId}:`, error)
-        })
-        
-        ws.on('close', () => {
-          // Connection closed - room cleanup handled in onSessionRemoved
-        })
-        
-        // Now handle the connection with tldraw
-        room.handleSocketConnect(ws)
-      } else {
-        console.error('❌ Invalid WebSocket connection for room:', roomId)
-        if (ws && typeof ws.close === 'function') {
-          ws.close()
-        }
+    ws.on('close', () => {
+      // Remove client from room
+      roomClients.delete(ws)
+      
+      // Clean up empty rooms
+      if (roomClients.size === 0) {
+        rooms.delete(roomId)
       }
-    } catch (error) {
-      console.error('❌ Error handling WebSocket connection:', error)
-      if (ws && typeof ws.close === 'function') {
-        ws.close()
-      }
-    }
+    })
+    
+    ws.on('error', (error) => {
+      console.error(`❌ WebSocket error in room ${roomId}:`, error)
+      // Remove client from room on error
+      roomClients.delete(ws)
+    })
   })
 
   wss.on('error', (error) => {

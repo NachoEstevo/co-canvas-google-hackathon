@@ -36,16 +36,8 @@ export function CollaborativeCanvas({ roomId, userName, onEditorMount }: Collabo
     assets: customAssetStore,
   })
   
-  console.log('📋 Canvas initialized with custom sync server:', {
-    roomId: roomId?.slice(0, 8) + '...',
-    userName,
-    hasStore: !!store,
-    websocketUrl: getWebSocketUrl(),
-    hasAssets: !!customAssetStore
-  })
 
   const handleMount = (editor: any) => {
-    console.log('🎯 Editor mounted with custom sync server')
     
     setEditor(editor)
     
@@ -60,10 +52,8 @@ export function CollaborativeCanvas({ roomId, userName, onEditorMount }: Collabo
         name: userName,
         isSnapMode: false,
       })
-      console.log('👤 User name set to:', userName)
     }
     
-    console.log('✅ Custom tldraw sync server active with full image upload support!')
   }
 
 
