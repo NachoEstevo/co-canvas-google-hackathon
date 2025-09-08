@@ -228,9 +228,15 @@ export function GenerationOverlay({ editor }: GenerationOverlayProps) {
                   }
                 }
               } else if (imageData.startsWith('http')) {
-                // Handle external URLs by converting to base64
+                // Handle external URLs by using proxy to avoid CORS issues
                 try {
-                  const response = await fetch(imageData)
+                  const proxyUrl = `/api/proxy/image?url=${encodeURIComponent(imageData)}`
+                  const response = await fetch(proxyUrl)
+                  
+                  if (!response.ok) {
+                    throw new Error(`Proxy request failed: ${response.status} ${response.statusText}`)
+                  }
+                  
                   const blob = await response.blob()
                   const reader = new FileReader()
                   const base64 = await new Promise<string>((resolve) => {
@@ -246,7 +252,7 @@ export function GenerationOverlay({ editor }: GenerationOverlayProps) {
                     data: base64
                   })
                 } catch (error) {
-                  console.warn('Failed to fetch external image:', imageData, error)
+                  console.warn('Failed to fetch external image via proxy:', imageData, error)
                 }
               }
             }
