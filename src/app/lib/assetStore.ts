@@ -39,11 +39,16 @@ export class CustomAssetStore implements TLAssetStore {
   resolve(asset: TLAsset, ctx: TLAssetContext): string | Promise<string | null> | null {
     // Handle the case where src might be null
     if (asset.type === 'image' && asset.props.src) {
-      // If it's an R2 URL, use our proxy to avoid CORS issues
+      // Handle R2 URLs - proxy old private URLs, direct access for new public URLs
       if (asset.props.src.includes('idea-fusion.0236038de169a8251e3492c5d72e7d02.r2.cloudflarestorage.com')) {
+        // Old private R2 URL - use proxy to avoid CORS issues
         const proxyUrl = `/api/proxy/image?url=${encodeURIComponent(asset.props.src)}`
-        console.log('🔍 CustomAssetStore: Using proxy for R2 asset:', proxyUrl)
+        console.log('🔍 CustomAssetStore: Using proxy for old R2 asset:', proxyUrl)
         return proxyUrl
+      } else if (asset.props.src.includes('pub-bf93ed9de7d9453885219b237362e9e7.r2.dev')) {
+        // New public R2 URL - use direct access (no CORS issues)
+        console.log('🔍 CustomAssetStore: Using direct access for new public R2 asset:', asset.props.src)
+        return asset.props.src
       }
       
       console.log('🔍 CustomAssetStore: Resolving direct asset src:', asset.props.src.substring(0, 50) + '...')

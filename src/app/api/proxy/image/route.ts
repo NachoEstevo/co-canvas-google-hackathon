@@ -24,8 +24,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'URL parameter required' }, { status: 400 })
     }
 
-    // Validate that it's from our R2 bucket
-    if (!imageUrl.includes('idea-fusion.0236038de169a8251e3492c5d72e7d02.r2.cloudflarestorage.com')) {
+    // Validate that it's from our R2 bucket (support both old and new URL formats)
+    const isValidR2Url = imageUrl.includes('idea-fusion.0236038de169a8251e3492c5d72e7d02.r2.cloudflarestorage.com') || 
+                         imageUrl.includes('pub-bf93ed9de7d9453885219b237362e9e7.r2.dev')
+    
+    if (!isValidR2Url) {
       console.error('❌ Invalid image URL - not from our R2 bucket:', imageUrl)
       return NextResponse.json({ error: 'Invalid image URL' }, { status: 400 })
     }

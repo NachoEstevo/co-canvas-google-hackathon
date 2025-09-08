@@ -64,8 +64,8 @@ export async function POST(request: NextRequest) {
       `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${process.env.R2_BUCKET_NAME}/${uniqueFilename}`
     ]
     
-    // Use the first URL format for now, but log all options
-    const publicUrl = possibleUrls[0]
+    // Use the public r2.dev URL format
+    const publicUrl = possibleUrls[1]
     
     console.log('📍 Possible R2 URLs:', possibleUrls)
 
