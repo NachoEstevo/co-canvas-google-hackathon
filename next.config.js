@@ -13,8 +13,7 @@ const nextConfig = {
     '@tldraw/store',
     '@tldraw/validate',
     '@tldraw/tlschema',
-    '@tldraw/editor',
-    '@tldraw/sync-core'
+    '@tldraw/editor'
   ],
   webpack: (config, { isServer }) => {
     // Fix multiple instance issues with tldraw - more conservative approach
@@ -28,8 +27,7 @@ const nextConfig = {
       '@tldraw/store': require.resolve('@tldraw/store'),
       '@tldraw/validate': require.resolve('@tldraw/validate'),
       '@tldraw/tlschema': require.resolve('@tldraw/tlschema'),
-      '@tldraw/editor': require.resolve('@tldraw/editor'),
-      '@tldraw/sync-core': require.resolve('@tldraw/sync-core')
+      '@tldraw/editor': require.resolve('@tldraw/editor')
     }
     
     // Ensure single instance across both client and server

@@ -2,128 +2,130 @@ import { createServer } from 'http'
 import { parse } from 'url'
 import next from 'next'
 import { WebSocketServer } from 'ws'
-import { TLSocketRoom } from '@tldraw/sync-core'
 
-// Comprehensive browser API polyfills for TLSocketRoom
-const mockElement = {
-  addEventListener: () => {},
-  removeEventListener: () => {},
-  dispatchEvent: () => {},
-  setAttribute: () => {},
-  getAttribute: () => null,
-  removeAttribute: () => {},
-  style: {},
-  classList: {
-    add: () => {},
-    remove: () => {},
-    contains: () => false,
-    toggle: () => {}
+// Custom TLDraw sync protocol implementation
+class SimpleTLDrawSync {
+  constructor() {
+    this.rooms = new Map()
   }
-}
 
-global.addEventListener = () => {}
-global.removeEventListener = () => {}
-global.dispatchEvent = () => {}
-global.setTimeout = setTimeout
-global.clearTimeout = clearTimeout
-global.setInterval = setInterval
-global.clearInterval = clearInterval
+  handleConnection(ws, roomId) {
+    // Get or create room
+    if (!this.rooms.has(roomId)) {
+      this.rooms.set(roomId, {
+        clients: new Set(),
+        data: new Map(), // Store document state
+        lastUpdate: Date.now()
+      })
+    }
 
-global.Event = class Event {
-  constructor(type, options = {}) {
-    this.type = type
-    this.bubbles = options.bubbles || false
-    this.cancelable = options.cancelable || false
-    this.target = null
-    this.currentTarget = null
-    this.defaultPrevented = false
+    const room = this.rooms.get(roomId)
+    room.clients.add(ws)
+
+    // Send initial sync message
+    ws.send(JSON.stringify({
+      type: 'connect',
+      roomId,
+      clientId: this.generateClientId()
+    }))
+
+    // Send current room data if any
+    if (room.data.size > 0) {
+      ws.send(JSON.stringify({
+        type: 'document-state',
+        data: Object.fromEntries(room.data)
+      }))
+    }
+
+    // Handle messages
+    ws.on('message', (data) => {
+      try {
+        const message = JSON.parse(data)
+        this.handleMessage(ws, roomId, message)
+      } catch (error) {
+        console.error('Error parsing message:', error)
+      }
+    })
+
+    // Handle disconnect
+    ws.on('close', () => {
+      room.clients.delete(ws)
+      
+      // Cleanup empty rooms
+      if (room.clients.size === 0) {
+        setTimeout(() => {
+          if (room.clients.size === 0) {
+            this.rooms.delete(roomId)
+          }
+        }, 30000) // Keep room for 30 seconds after last client
+      }
+    })
+
+    ws.on('error', (error) => {
+      console.error('WebSocket error:', error)
+      room.clients.delete(ws)
+    })
   }
-  preventDefault() { this.defaultPrevented = true }
-  stopPropagation() {}
-  stopImmediatePropagation() {}
-}
 
-global.CustomEvent = class CustomEvent extends global.Event {
-  constructor(type, options = {}) {
-    super(type, options)
-    this.detail = options.detail
+  handleMessage(ws, roomId, message) {
+    const room = this.rooms.get(roomId)
+    if (!room) return
+
+    switch (message.type) {
+      case 'document-update':
+        // Store the update
+        if (message.changes) {
+          message.changes.forEach(change => {
+            if (change.added) {
+              Object.entries(change.added).forEach(([key, value]) => {
+                room.data.set(key, value)
+              })
+            }
+            if (change.updated) {
+              Object.entries(change.updated).forEach(([key, value]) => {
+                room.data.set(key, value)
+              })
+            }
+            if (change.removed) {
+              change.removed.forEach(key => {
+                room.data.delete(key)
+              })
+            }
+          })
+        }
+        
+        room.lastUpdate = Date.now()
+        
+        // Broadcast to all other clients
+        room.clients.forEach(client => {
+          if (client !== ws && client.readyState === 1) {
+            client.send(JSON.stringify(message))
+          }
+        })
+        break
+
+      case 'presence':
+        // Broadcast presence to all other clients
+        room.clients.forEach(client => {
+          if (client !== ws && client.readyState === 1) {
+            client.send(JSON.stringify(message))
+          }
+        })
+        break
+
+      default:
+        // Relay other messages
+        room.clients.forEach(client => {
+          if (client !== ws && client.readyState === 1) {
+            client.send(JSON.stringify(message))
+          }
+        })
+    }
   }
-}
 
-global.MessageEvent = class MessageEvent extends global.Event {
-  constructor(type, options = {}) {
-    super(type, options)
-    this.data = options.data
-    this.origin = options.origin || ''
-    this.source = options.source || null
+  generateClientId() {
+    return 'client_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now()
   }
-}
-
-global.location = {
-  href: 'http://localhost:3000',
-  origin: 'http://localhost:3000',
-  protocol: 'http:',
-  host: 'localhost:3000',
-  hostname: 'localhost',
-  port: '3000',
-  pathname: '/',
-  search: '',
-  hash: ''
-}
-
-global.window = {
-  addEventListener: () => {},
-  removeEventListener: () => {},
-  dispatchEvent: () => {},
-  location: global.location,
-  document: null, // Will be set below
-  setTimeout,
-  clearTimeout,
-  setInterval,
-  clearInterval,
-  requestAnimationFrame: (cb) => setTimeout(cb, 16),
-  cancelAnimationFrame: clearTimeout,
-  innerWidth: 1920,
-  innerHeight: 1080,
-  devicePixelRatio: 1,
-  navigator: {
-    userAgent: 'Node.js Server',
-    platform: 'server'
-  }
-}
-
-global.document = {
-  addEventListener: () => {},
-  removeEventListener: () => {},
-  dispatchEvent: () => {},
-  createElement: () => mockElement,
-  createElementNS: () => mockElement,
-  getElementById: () => mockElement,
-  querySelector: () => mockElement,
-  querySelectorAll: () => [mockElement],
-  body: mockElement,
-  head: mockElement,
-  documentElement: mockElement,
-  createTextNode: () => ({ textContent: '' }),
-  createDocumentFragment: () => mockElement
-}
-
-global.window.document = global.document
-
-// WebSocket polyfills for TLDraw
-global.WebSocket = global.WebSocket || class WebSocket {
-  constructor(url) {
-    this.url = url
-    this.readyState = 1 // OPEN
-    this.CONNECTING = 0
-    this.OPEN = 1
-    this.CLOSING = 2
-    this.CLOSED = 3
-  }
-  send() {}
-  close() {}
-  addEventListener() {}
-  removeEventListener() {}
 }
 
 const dev = process.env.NODE_ENV !== 'production'
@@ -134,8 +136,8 @@ const port = parseInt(process.env.PORT) || 3000
 const app = next({ dev, hostname, port })
 const handle = app.getRequestHandler()
 
-// Store active TLSocketRooms
-const rooms = new Map()
+// Initialize custom sync server
+const syncServer = new SimpleTLDrawSync()
 
 app.prepare().then(() => {
   // Create HTTP server
@@ -148,7 +150,7 @@ app.prepare().then(() => {
         res.writeHead(200, { 'Content-Type': 'application/json' })
         res.end(JSON.stringify({ 
           status: 'ok', 
-          activeRooms: rooms.size,
+          activeRooms: syncServer.rooms.size,
           timestamp: new Date().toISOString(),
           nodeEnv: process.env.NODE_ENV
         }))
@@ -179,44 +181,12 @@ app.prepare().then(() => {
       return
     }
     
-    // Get or create TLSocketRoom
-    let room = rooms.get(roomId)
-    if (!room) {
-      room = new TLSocketRoom({
-        initialSnapshot: undefined,
-        onSessionRemoved: (room, args) => {
-          if (room.getNumActiveSessions() === 0) {
-            rooms.delete(roomId)
-          }
-        },
-        onDataChange: () => {
-          // Data persistence could go here
-        }
-      })
-      rooms.set(roomId, room)
-    }
-    
-    // Handle WebSocket connection with proper error handling
+    // Handle connection with custom sync
     try {
-      // Set up error handlers before calling handleSocketConnect
-      ws.on('error', (error) => {
-        console.error(`❌ WebSocket error in room ${roomId}:`, error)
-      })
-      
-      ws.on('close', () => {
-        // Connection cleanup handled by TLSocketRoom
-      })
-      
-      // Connect to the TLSocketRoom
-      room.handleSocketConnect(ws)
-      
+      syncServer.handleConnection(ws, roomId)
     } catch (error) {
-      console.error('❌ Error handling socket connection:', error)
-      try {
-        ws.close()
-      } catch (closeError) {
-        console.error('❌ Error closing socket:', closeError)
-      }
+      console.error('❌ Error handling sync connection:', error)
+      ws.close()
     }
   })
 
