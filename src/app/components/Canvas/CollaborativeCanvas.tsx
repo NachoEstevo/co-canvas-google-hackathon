@@ -23,9 +23,15 @@ export function CollaborativeCanvas({ roomId, userName, onEditorMount }: Collabo
     if (typeof window !== 'undefined') {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
       const hostname = window.location.hostname
+      
       // For local dev, use port 3001 where the sync server runs
-      const port = hostname === 'localhost' ? '3001' : window.location.port
-      return `${protocol}//${hostname}:${port}?roomId=${roomId}`
+      // For production (Railway), use the integrated server with /api/sync path
+      if (hostname === 'localhost') {
+        return `${protocol}//${hostname}:3001?roomId=${roomId}`
+      } else {
+        // Production: use the integrated server with correct path
+        return `${protocol}//${window.location.host}/api/sync?roomId=${roomId}`
+      }
     }
     return `ws://localhost:3001?roomId=${roomId}`
   }
