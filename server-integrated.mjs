@@ -75,15 +75,31 @@ app.prepare().then(() => {
     }
     
     // Handle WebSocket connection with tldraw sync
-    room.handleSocketConnect(ws)
-    
-    ws.on('close', () => {
-      // Connection closed
-    })
-    
-    ws.on('error', (error) => {
-      console.error(`❌ WebSocket error in room ${roomId}:`, error)
-    })
+    try {
+      if (ws && typeof ws.on === 'function') {
+        // Add error handlers first to prevent uncaught exceptions
+        ws.on('error', (error) => {
+          console.error(`❌ WebSocket error in room ${roomId}:`, error)
+        })
+        
+        ws.on('close', () => {
+          // Connection closed - room cleanup handled in onSessionRemoved
+        })
+        
+        // Now handle the connection with tldraw
+        room.handleSocketConnect(ws)
+      } else {
+        console.error('❌ Invalid WebSocket connection for room:', roomId)
+        if (ws && typeof ws.close === 'function') {
+          ws.close()
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error handling WebSocket connection:', error)
+      if (ws && typeof ws.close === 'function') {
+        ws.close()
+      }
+    }
   })
 
   wss.on('error', (error) => {
@@ -95,8 +111,20 @@ app.prepare().then(() => {
     console.log(`Server ready on http://${hostname}:${port}`)
   })
 
+  // Global error handlers to prevent crashes
+  process.on('uncaughtException', (error) => {
+    console.error('❌ Uncaught Exception:', error)
+    // Don't exit in production, just log the error
+  })
+
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason)
+    // Don't exit in production, just log the error
+  })
+
   // Graceful shutdown
   process.on('SIGTERM', () => {
+    console.log('🛑 Received SIGTERM, shutting down gracefully')
     server.close(() => {
       process.exit(0)
     })

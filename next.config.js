@@ -17,7 +17,7 @@ const nextConfig = {
     '@tldraw/sync-core'
   ],
   webpack: (config, { isServer }) => {
-    // Fix multiple instance issues with tldraw - more comprehensive aliasing
+    // Fix multiple instance issues with tldraw - more conservative approach
     config.resolve.alias = {
       ...config.resolve.alias,
       'tldraw': require.resolve('tldraw'),
