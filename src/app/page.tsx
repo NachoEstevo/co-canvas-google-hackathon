@@ -50,7 +50,6 @@ export default function HomePage() {
     // This will trigger tldraw's native image upload via our asset store
     if (!editor) return
     
-    console.log('🎯 Triggering native tldraw image upload for:', file.name)
     
     // Create a file input event to trigger tldraw's native handling
     const input = document.createElement('input')

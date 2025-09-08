@@ -8,6 +8,7 @@
     "dev:sync": "node server.mjs",
     "build": "next build",
     "start": "node server-integrated.mjs",
+    "railway:start": "npm run build && node server-integrated.mjs",
     "start:production": "next build && node server-integrated.mjs",
     "start:with-sync": "node server.mjs",
     "sync-server": "node server.mjs",

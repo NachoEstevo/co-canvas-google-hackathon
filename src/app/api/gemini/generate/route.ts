@@ -33,7 +33,6 @@ function buildGeminiContent(prompt: string, imageData?: string, images?: any[]) 
             data: base64Data
           }
         })
-        console.log('Added main sketch/drawing to Gemini content')
       }
     } catch (error) {
       console.error('Failed to process main image data:', error)
@@ -51,7 +50,6 @@ function buildGeminiContent(prompt: string, imageData?: string, images?: any[]) 
               data: img.data.trim()
             }
           })
-          console.log('Added context image to Gemini content')
         } catch (error) {
           console.warn('Failed to add context image:', error)
         }
@@ -70,21 +68,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
     }
 
-    console.log('Generating image with Gemini 2.5 Flash Image Preview:', {
-      prompt: prompt.substring(0, 100) + '...',
-      hasImageData: !!imageData,
-      hasContextImages: !!(images && images.length > 0),
-      contextImagesCount: images?.length || 0
-    })
 
     // Build the content array with prompt and images
     const content = buildGeminiContent(prompt, imageData, images)
     
-    console.log('Built Gemini content:', {
-      totalParts: content.length,
-      textParts: content.filter(p => p.text).length,
-      imageParts: content.filter(p => p.inlineData).length
-    })
 
     // Generate content using Gemini 2.5 Flash Image Preview
     const response = await ai.models.generateContent({
@@ -92,7 +79,6 @@ export async function POST(request: NextRequest) {
       contents: content,
     })
 
-    console.log('Gemini response received, processing parts...')
 
     let generatedText = ''
     let generatedImageData = null
@@ -103,15 +89,10 @@ export async function POST(request: NextRequest) {
       for (const part of response.candidates[0].content.parts) {
         if (part.text) {
           generatedText += part.text
-          console.log('Generated text:', part.text.substring(0, 100) + '...')
         } else if (part.inlineData && part.inlineData.data) {
           // This is the generated image!
           generatedImageData = part.inlineData.data
           generatedImageUrl = `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`
-          console.log('Generated image received:', {
-            mimeType: part.inlineData.mimeType || 'image/png',
-            dataLength: part.inlineData.data.length
-          })
         }
       }
     } else {
