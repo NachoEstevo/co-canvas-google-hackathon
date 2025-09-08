@@ -22,10 +22,12 @@ export function CollaborativeCanvas({ roomId, userName, onEditorMount }: Collabo
   const getWebSocketUrl = () => {
     if (typeof window !== 'undefined') {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-      const host = window.location.host
-      return `${protocol}//${host}/api/sync?roomId=${roomId}`
+      const hostname = window.location.hostname
+      // For local dev, use port 3001 where the sync server runs
+      const port = hostname === 'localhost' ? '3001' : window.location.port
+      return `${protocol}//${hostname}:${port}?roomId=${roomId}`
     }
-    return `ws://localhost:3000/api/sync?roomId=${roomId}`
+    return `ws://localhost:3001?roomId=${roomId}`
   }
   
   // Use production sync with our custom WebSocket server

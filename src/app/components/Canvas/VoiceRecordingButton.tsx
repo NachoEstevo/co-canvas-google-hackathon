@@ -119,25 +119,25 @@ export function VoiceRecordingButton({ editor, roomId }: VoiceRecordingButtonPro
       <button
         onClick={handleClick}
         className={`
-          inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium
-          border border-input shadow-sm transition-colors
-          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+          inline-flex items-center gap-3 px-6 py-3 rounded-lg text-base font-semibold
+          border-0 shadow-lg transition-all duration-200
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 
           disabled:pointer-events-none disabled:opacity-50
           ${isRecording 
-            ? 'bg-red-600 text-white hover:bg-red-700 animate-pulse' 
-            : 'bg-purple-600 text-white hover:bg-purple-700'
+            ? 'bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 animate-pulse focus-visible:ring-red-500' 
+            : 'bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:from-purple-600 hover:to-purple-700 hover:scale-105 focus-visible:ring-purple-500'
           }
         `}
         title={isRecording ? 'Click to stop recording' : 'Click to start voice recording'}
       >
         {isRecording ? (
           <>
-            <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+            <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
             <span>Recording...</span>
           </>
         ) : (
           <>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
               <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
               <line x1="12" x2="12" y1="19" y2="22" />

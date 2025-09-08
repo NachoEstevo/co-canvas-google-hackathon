@@ -18,18 +18,19 @@ export function AIButton({ onClick, disabled = false }: AIButtonProps) {
       onMouseLeave={() => setIsHovered(false)}
       className={`
         fixed bottom-6 left-1/2 transform -translate-x-1/2 translate-x-80 z-[999]
-        inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium
-        bg-primary text-primary-foreground hover:bg-primary/90
-        border border-input shadow-sm transition-colors
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+        inline-flex items-center gap-3 px-6 py-3 rounded-lg text-base font-semibold
+        bg-gradient-to-r from-indigo-600 to-purple-600 text-white
+        hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg hover:scale-105
+        border-0 shadow-lg transition-all duration-200
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500
         disabled:pointer-events-none disabled:opacity-50
-        ${disabled ? 'bg-muted text-muted-foreground' : 'bg-slate-900 text-white hover:bg-slate-800'}
+        ${disabled ? 'from-gray-400 to-gray-500 cursor-not-allowed' : ''}
       `}
     >
       {/* Sparkles Icon */}
       <svg
-        width="16"
-        height="16"
+        width="20"
+        height="20"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"

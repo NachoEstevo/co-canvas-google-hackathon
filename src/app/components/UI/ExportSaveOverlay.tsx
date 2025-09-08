@@ -183,17 +183,18 @@ export function ExportSaveOverlay({ editor, roomId }: ExportSaveOverlayProps) {
         disabled={isSaving}
         className={`
           inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium
-          border-0 shadow-md transition-all duration-200
-          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+          border border-input bg-background hover:bg-accent hover:text-accent-foreground
+          shadow-sm transition-colors duration-200
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
           ${isSaving 
-            ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-            : 'bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-lg hover:scale-105'
+            ? 'opacity-50 cursor-not-allowed' 
+            : ''
           }
         `}
       >
         {isSaving ? (
           <>
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
             <span>Saving...</span>
           </>
         ) : (
@@ -214,17 +215,18 @@ export function ExportSaveOverlay({ editor, roomId }: ExportSaveOverlayProps) {
           disabled={isExporting}
           className={`
             inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium
-            border-0 shadow-md transition-all duration-200
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+            border border-input bg-background hover:bg-accent hover:text-accent-foreground
+            shadow-sm transition-colors duration-200
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
             ${isExporting 
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-              : 'bg-violet-600 text-white hover:bg-violet-700 hover:shadow-lg hover:scale-105'
+              ? 'opacity-50 cursor-not-allowed' 
+              : ''
             }
           `}
         >
           {isExporting ? (
             <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
               <span>Exporting...</span>
             </>
           ) : (

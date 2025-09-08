@@ -3,7 +3,6 @@
 import { CollaborativeCanvas } from './components/Canvas/CollaborativeCanvas'
 import { OnboardingTutorial, QuickHelpButton } from './components/UI/OnboardingTutorial'
 import { ExportSaveOverlay } from './components/UI/ExportSaveOverlay'
-import { ImageUploadButton } from './components/UI/ImageUploadButton'
 import { UserNameDialog } from './components/UI/UserNameDialog'
 import { useNotifications } from './components/UI/NotificationSystem'
 import { useEffect, useState } from 'react'
@@ -155,7 +154,6 @@ export default function HomePage() {
             {/* Action Buttons */}
             <div className="flex items-center gap-2">
               <QuickHelpButton />
-              {editor && <ImageUploadButton onImageUpload={handleImageUpload} />}
               {editor && <ExportSaveOverlay editor={editor} roomId={roomId} />}
             </div>
           </div>
