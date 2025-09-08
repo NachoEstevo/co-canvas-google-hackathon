@@ -22,10 +22,10 @@ export function CollaborativeCanvas({ roomId, userName, onEditorMount }: Collabo
   const getWebSocketUrl = () => {
     if (typeof window !== 'undefined') {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-      const host = process.env.NODE_ENV === 'production' 
-        ? 'co-canvas-google-hackathon-production.up.railway.app'
-        : window.location.host
-      return `${protocol}//${host}/api/sync?roomId=${roomId}`
+      const host = window.location.host
+      const wsUrl = `${protocol}//${host}/api/sync?roomId=${roomId}`
+      console.log('🔌 WebSocket URL:', wsUrl)
+      return wsUrl
     }
     return `ws://localhost:3000/api/sync?roomId=${roomId}`
   }
@@ -35,6 +35,31 @@ export function CollaborativeCanvas({ roomId, userName, onEditorMount }: Collabo
     uri: getWebSocketUrl(),
     assets: customAssetStore,
   })
+
+  // Debug sync connection state
+  useEffect(() => {
+    if (store) {
+      console.log('📦 Store created:', !!store)
+      
+      // Check if store is ready
+      const checkStoreReady = () => {
+        console.log('🔍 Store state check:', {
+          hasStore: !!store,
+          storeReady: store ? 'store exists' : 'no store'
+        })
+      }
+      
+      checkStoreReady()
+      
+      // Set up periodic checks
+      const interval = setInterval(checkStoreReady, 2000)
+      
+      return () => clearInterval(interval)
+    } else {
+      console.log('❌ No store created')
+      setHasError(true)
+    }
+  }, [store])
   
 
   const handleMount = (editor: any) => {

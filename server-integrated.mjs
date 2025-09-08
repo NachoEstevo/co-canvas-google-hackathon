@@ -2,6 +2,33 @@ import { createServer } from 'http'
 import { parse } from 'url'
 import next from 'next'
 import { WebSocketServer } from 'ws'
+import { TLSocketRoom } from '@tldraw/sync-core'
+
+// Polyfill browser APIs that TLSocketRoom needs
+global.addEventListener = () => {}
+global.removeEventListener = () => {}
+global.dispatchEvent = () => {}
+global.Event = class Event {
+  constructor(type) {
+    this.type = type
+  }
+}
+global.CustomEvent = class CustomEvent extends global.Event {
+  constructor(type, options = {}) {
+    super(type)
+    this.detail = options.detail
+  }
+}
+global.window = {
+  addEventListener: () => {},
+  removeEventListener: () => {},
+  dispatchEvent: () => {}
+}
+global.document = {
+  addEventListener: () => {},
+  removeEventListener: () => {},
+  dispatchEvent: () => {}
+}
 
 const dev = process.env.NODE_ENV !== 'production'
 const hostname = '0.0.0.0'
@@ -11,7 +38,7 @@ const port = parseInt(process.env.PORT) || 3000
 const app = next({ dev, hostname, port })
 const handle = app.getRequestHandler()
 
-// Store active rooms - simple message relay
+// Store active TLSocketRooms
 const rooms = new Map()
 
 app.prepare().then(() => {
@@ -47,8 +74,12 @@ app.prepare().then(() => {
   })
 
   wss.on('connection', (ws, request) => {
+    console.log('🔌 New WebSocket connection received')
+    
     const parsedUrl = parse(request.url, true)
     const roomId = parsedUrl.query.roomId
+    
+    console.log('🏠 Room ID:', roomId)
     
     if (!roomId) {
       console.error('❌ No roomId provided')
@@ -56,44 +87,53 @@ app.prepare().then(() => {
       return
     }
     
-    // Get or create room clients list
-    if (!rooms.has(roomId)) {
-      rooms.set(roomId, new Set())
-    }
-    const roomClients = rooms.get(roomId)
-    
-    // Add client to room
-    roomClients.add(ws)
-    
-    // Handle WebSocket messages - relay to other clients in the same room
-    ws.on('message', (data) => {
-      try {
-        // Relay message to all other clients in the room
-        for (const client of roomClients) {
-          if (client !== ws && client.readyState === client.OPEN) {
-            client.send(data)
+    // Get or create TLSocketRoom
+    let room = rooms.get(roomId)
+    if (!room) {
+      console.log(`🆕 Creating new TLSocketRoom for: ${roomId}`)
+      room = new TLSocketRoom({
+        initialSnapshot: undefined,
+        onSessionRemoved: (room, args) => {
+          console.log(`👋 Session removed from ${roomId}`)
+          if (room.getNumActiveSessions() === 0) {
+            console.log(`🗑️ Room ${roomId} is empty, cleaning up`)
+            rooms.delete(roomId)
           }
+        },
+        onDataChange: () => {
+          console.log(`💾 Data changed in room: ${roomId}`)
         }
-      } catch (error) {
-        console.error(`❌ Error relaying message in room ${roomId}:`, error)
-      }
-    })
+      })
+      rooms.set(roomId, room)
+    } else {
+      console.log(`♻️ Using existing room: ${roomId}`)
+    }
     
-    ws.on('close', () => {
-      // Remove client from room
-      roomClients.delete(ws)
+    // Handle WebSocket connection with proper error handling
+    try {
+      console.log(`🔗 Connecting to TLSocketRoom for: ${roomId}`)
       
-      // Clean up empty rooms
-      if (roomClients.size === 0) {
-        rooms.delete(roomId)
+      // Set up error handlers before calling handleSocketConnect
+      ws.on('error', (error) => {
+        console.error(`❌ WebSocket error in room ${roomId}:`, error)
+      })
+      
+      ws.on('close', () => {
+        console.log(`🔌 WebSocket closed for room: ${roomId}`)
+      })
+      
+      // Now connect to the TLSocketRoom
+      room.handleSocketConnect(ws)
+      console.log(`✅ Successfully connected to room: ${roomId}`)
+      
+    } catch (error) {
+      console.error('❌ Error handling socket connection:', error)
+      try {
+        ws.close()
+      } catch (closeError) {
+        console.error('❌ Error closing socket:', closeError)
       }
-    })
-    
-    ws.on('error', (error) => {
-      console.error(`❌ WebSocket error in room ${roomId}:`, error)
-      // Remove client from room on error
-      roomClients.delete(ws)
-    })
+    }
   })
 
   wss.on('error', (error) => {
