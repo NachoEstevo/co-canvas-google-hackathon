@@ -57,17 +57,10 @@ export async function POST(request: NextRequest) {
     const uploadResult = await r2Client.send(uploadCommand)
     
     // Construct the public URL for R2
-    // Try multiple R2 URL formats to ensure compatibility
-    const possibleUrls = [
-      `https://${process.env.R2_BUCKET_NAME}.${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${uniqueFilename}`,
-      `https://pub-${process.env.R2_ACCOUNT_ID}.r2.dev/${uniqueFilename}`,
-      `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${process.env.R2_BUCKET_NAME}/${uniqueFilename}`
-    ]
+    // Use the correct public R2 URL
+    const publicUrl = `https://pub-bf93ed9de7d9453885219b237362e9e7.r2.dev/${uniqueFilename}`
     
-    // Use the public r2.dev URL format
-    const publicUrl = possibleUrls[1]
-    
-    console.log('📍 Possible R2 URLs:', possibleUrls)
+    console.log('📍 Using public R2 URL:', publicUrl)
 
     console.log('✅ File uploaded to R2 successfully:', {
       key: uniqueFilename,
