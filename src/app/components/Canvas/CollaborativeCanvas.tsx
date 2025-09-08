@@ -23,9 +23,7 @@ export function CollaborativeCanvas({ roomId, userName, onEditorMount }: Collabo
     if (typeof window !== 'undefined') {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
       const host = window.location.host
-      const wsUrl = `${protocol}//${host}/api/sync?roomId=${roomId}`
-      console.log('🔌 WebSocket URL:', wsUrl)
-      return wsUrl
+      return `${protocol}//${host}/api/sync?roomId=${roomId}`
     }
     return `ws://localhost:3000/api/sync?roomId=${roomId}`
   }
@@ -36,28 +34,14 @@ export function CollaborativeCanvas({ roomId, userName, onEditorMount }: Collabo
     assets: customAssetStore,
   })
 
-  // Debug sync connection state
+  // Monitor store creation
   useEffect(() => {
-    if (store) {
-      console.log('📦 Store created:', !!store)
+    if (!store) {
+      const timer = setTimeout(() => {
+        setHasError(true)
+      }, 10000) // 10 second timeout
       
-      // Check if store is ready
-      const checkStoreReady = () => {
-        console.log('🔍 Store state check:', {
-          hasStore: !!store,
-          storeReady: store ? 'store exists' : 'no store'
-        })
-      }
-      
-      checkStoreReady()
-      
-      // Set up periodic checks
-      const interval = setInterval(checkStoreReady, 2000)
-      
-      return () => clearInterval(interval)
-    } else {
-      console.log('❌ No store created')
-      setHasError(true)
+      return () => clearTimeout(timer)
     }
   }, [store])
   
